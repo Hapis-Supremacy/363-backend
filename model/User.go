@@ -9,6 +9,17 @@ type User struct {
 }
 
 type Paket struct {
-	jumlah float64
-	durasi time.Time
+	Id     uint
+	UserId uint
+	Jumlah float64
+	Durasi time.Time
+	Jenis  string
+}
+
+type Penawaran struct {
+	Id     uint
+	Jumlah float64
+	Durasi int
+	Jenis  string
+	Harga  float64
 }
