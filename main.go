@@ -16,7 +16,7 @@ func init() {
 
 func main() {
 	// Pasang rute /login yang dilindungi AuthMiddleware
-	http.HandleFunc("/login", middleware.AuthMiddleware(controller.LoginHandler))
+	http.HandleFunc("/login", middleware.AuthMiddleware(controller.USSDHandler))
 
 	log.Println("Server 363-Project jalan di http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

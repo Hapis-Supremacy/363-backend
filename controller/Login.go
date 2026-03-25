@@ -3,9 +3,9 @@ package controller
 import (
 	"363project/controller/service"
 	"363project/model"
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/websocket"
 )
@@ -36,11 +36,14 @@ func USSDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIdCtx := r.Context().Value("id")
-	idUint, _ := strconv.ParseUint(fmt.Sprint(userIdCtx), 10, 32)
+	ussd, ok := r.Context().Value("ussd").(model.USSDCookie)
+	if !ok {
+		CloseAndReset(conn, "Sesi tidak valid.")
+		return
+	}
 
 	// State internal
-	step := 0
+	ussd.Step = 0
 	var currentOffers []model.Penawaran
 
 	// --- INISIALISASI: Kirim Menu Utama saat pertama kali buka ---
@@ -64,7 +67,7 @@ func USSDHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		if step == 0 {
+		if ussd.Step == 0 {
 			// --- LOGIKA STEP 0 (Sama dengan kode kamu) ---
 			switch req.Option {
 			case 1, 2, 3, 4, 5, 6, 7:
@@ -80,8 +83,9 @@ func USSDHandler(w http.ResponseWriter, r *http.Request) {
 				}
 
 				currentOffers = list
-				step = 1
-				updateUSSDCookie(w, r, int(idUint), step)
+				ussd.Step = 1
+				data := ussd
+				updateUSSDCookie(w, r, data)
 
 				conn.WriteJSON(USSDResponse{
 					Description: "Pilih paket yang ingin dibeli:",
@@ -90,12 +94,12 @@ func USSDHandler(w http.ResponseWriter, r *http.Request) {
 				})
 
 			case 8: // Cek Pulsa
-				pulsa, _ := service.CheckPulsa(uint(idUint))
+				pulsa, _ := service.CheckPulsa(ussd.UserId)
 				CloseAndReset(conn, fmt.Sprintf("Sisa Pulsa Anda: Rp%.2f", pulsa))
 				return
 
 			case 9: // Cek Kuota
-				kuota, _ := service.CheckKuota(uint(idUint))
+				kuota, _ := service.CheckKuota(ussd.UserId)
 				CloseAndReset(conn, fmt.Sprintf("Sisa Kuota Anda: %.2f GB", kuota/1000000000))
 				return
 
@@ -104,7 +108,7 @@ func USSDHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-		} else if step == 1 {
+		} else if ussd.Step == 1 {
 			// --- LOGIKA STEP 1 (Sama dengan kode kamu) ---
 			index := req.Option - 1
 			if index < 0 || index >= len(currentOffers) {
@@ -113,7 +117,7 @@ func USSDHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			selectedPackage := currentOffers[index]
-			_, err := service.BuyPackage(selectedPackage, uint(idUint))
+			_, err := service.BuyPackage(selectedPackage, ussd.UserId)
 
 			if err != nil {
 				CloseAndReset(conn, "Gagal: "+err.Error())
@@ -125,12 +129,14 @@ func USSDHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func updateUSSDCookie(w http.ResponseWriter, r *http.Request, userId int, step int) {
+func updateUSSDCookie(w http.ResponseWriter, r *http.Request, USSD model.USSDCookie) {
+	jsonBytes, _ := json.Marshal(USSD)
 	cookie := &http.Cookie{
 		Name:     "ussd_state",
-		Value:    fmt.Sprintf("userId=%d&step=%d", userId, step),
+		Value:    string(jsonBytes),
 		Path:     "/",
 		HttpOnly: true,
+		MaxAge:   3600 * 24,
 	}
 	http.SetCookie(w, cookie)
 }
@@ -140,7 +146,7 @@ func formatMenu(penawaran []model.Penawaran) []string {
 	for _, p := range penawaran {
 		// Asumsi p.Jumlah dalam Byte, kita ubah ke GB
 		gb := p.Jumlah / 1000000000
-		m = append(m, fmt.Sprintf("%dGB/%dHr/Rp%d", gb, p.Durasi, p.Harga))
+		m = append(m, fmt.Sprintf("%.1fGB/%dHr/Rp%.0f", gb, p.Durasi, p.Harga))
 	}
 	return m
 }

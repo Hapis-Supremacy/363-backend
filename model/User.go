@@ -2,6 +2,11 @@ package model
 
 import "time"
 
+type USSDCookie struct {
+	UserId uint `json:"userId"`
+	Step   int  `json:"step"`
+}
+
 type User struct {
 	Id    uint
 	Pulsa float64
