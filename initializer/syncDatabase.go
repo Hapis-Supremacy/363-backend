@@ -1,5 +1,8 @@
 package initializer
 
+import "363project/model"
+
 func SyncDatabase() {
-	DB.AutoMigrate()
+	// bikin tabel 'users' otomatis di MySQL
+	DB.AutoMigrate(&model.User{})
 }
