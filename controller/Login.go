@@ -143,10 +143,12 @@ func updateUSSDCookie(w http.ResponseWriter, r *http.Request, USSD model.USSDCoo
 
 func formatMenu(penawaran []model.Penawaran) []string {
 	var m []string
-	for _, p := range penawaran {
-		// Asumsi p.Jumlah dalam Byte, kita ubah ke GB
-		gb := p.Jumlah / 1000000000
-		m = append(m, fmt.Sprintf("%.1fGB/%dHr/Rp%.0f", gb, p.Durasi, p.Harga))
+	for i, p := range penawaran {
+		if p.Harga == 0 {
+			m = append(m, fmt.Sprintf("%d.%s", i+1, p.Nama))
+		} else {
+			m = append(m, fmt.Sprintf("%d.%s - Rp%.0f", i+1, p.Nama, p.Harga))
+		}
 	}
 	return m
 }
