@@ -7,9 +7,9 @@ import (
 	"time"
 )
 
-func CreateAnonymousUser() (model.User, error) {
-	user := model.User{
-		Pulsa: 200000,
+func CreateAnonymousUser() (model.Customers, error) {
+	user := model.Customers{
+		Jumlah_pulsa: 200000,
 	}
 	err := initializer.DB.Create(&user).Error
 	if err != nil {
@@ -18,26 +18,26 @@ func CreateAnonymousUser() (model.User, error) {
 	return user, nil
 }
 
-func BuyPackage(req model.Penawaran, userID uint) (model.Paket, error) {
+func BuyPackage(req model.Penawarans, userID uint) (model.Kuotas, error) {
 
-	paket := model.Paket{
-		Jumlah: req.Jumlah,
-		UserId: userID,
-		Durasi: time.Now().Add(time.Duration(req.Durasi) * time.Hour),
-		Jenis:  req.Jenis,
+	paket := model.Kuotas{
+		Jumlah:  req.Jumlah,
+		User_id: int(userID),
+		Durasi:  time.Now().Add(time.Duration(req.Durasi) * time.Hour),
+		Jenis:   req.Jenis,
 	}
 
 	tx := initializer.DB.Begin()
-	var user model.User
+	var user model.Customers
 	err := initializer.DB.First(&user, "id = ?", userID).Error
 	if err != nil {
 		return paket, err
 	}
 
-	if user.Pulsa < req.Harga {
+	if user.Jumlah_pulsa < req.Harga {
 		return paket, errors.New("pulsa tidak mencukupi")
 	}
-	user.Pulsa = user.Pulsa - req.Harga
+	user.Jumlah_pulsa = user.Jumlah_pulsa - req.Harga
 	err = tx.Save(&user).Error
 	if err != nil {
 		return paket, err
@@ -52,8 +52,8 @@ func BuyPackage(req model.Penawaran, userID uint) (model.Paket, error) {
 	return paket, nil
 }
 
-func ShowPenawaran(jenis string) ([]model.Penawaran, error) {
-	var Penawaran []model.Penawaran
+func ShowPenawaran(jenis string) ([]model.Penawarans, error) {
+	var Penawaran []model.Penawarans
 	err := initializer.DB.Where("jenis = ?", jenis).Find(&Penawaran).Error
 	if err != nil {
 		return Penawaran, err
@@ -65,9 +65,9 @@ func ShowPenawaran(jenis string) ([]model.Penawaran, error) {
 	return Penawaran, nil
 }
 
-func CheckKuota(user uint) (float64, error) {
-	var paket []model.Paket
-	var total float64 = 0
+func CheckKuota(user uint) (int, error) {
+	var paket []model.Kuotas
+	var total int = 0
 	err := initializer.DB.Where("id = ?", user).Find(&paket).Error
 	if err != nil {
 		return 0, err
@@ -80,7 +80,7 @@ func CheckKuota(user uint) (float64, error) {
 
 func CheckPulsa(user uint) (float64, error) {
 	var Pulsa float64
-	err := initializer.DB.Model(&model.User{}).Select("pulsa").Where("id = ?", user).Scan(&Pulsa).Error
+	err := initializer.DB.Model(&model.Customers{}).Select("pulsa").Where("id = ?", user).Scan(&Pulsa).Error
 	if err != nil {
 		return 0, err
 	}

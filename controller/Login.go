@@ -44,7 +44,7 @@ func USSDHandler(w http.ResponseWriter, r *http.Request) {
 
 	// State internal
 	ussd.Step = 0
-	var currentOffers []model.Penawaran
+	var currentOffers []model.Penawarans
 
 	// --- INISIALISASI: Kirim Menu Utama saat pertama kali buka ---
 	initialMenu := USSDResponse{
@@ -141,7 +141,7 @@ func updateUSSDCookie(w http.ResponseWriter, r *http.Request, USSD model.USSDCoo
 	http.SetCookie(w, cookie)
 }
 
-func formatMenu(penawaran []model.Penawaran) []string {
+func formatMenu(penawaran []model.Penawarans) []string {
 	var m []string
 	for _, p := range penawaran {
 		// Asumsi p.Jumlah dalam Byte, kita ubah ke GB
