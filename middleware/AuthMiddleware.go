@@ -19,7 +19,7 @@ func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			}
 
 			cookieData := model.USSDCookie{
-				UserId: int(newUser.Id),
+				UserId: newUser.Id,
 				Step:   0,
 			}
 			jsonBytes, _ := json.Marshal(&cookieData)
