@@ -21,7 +21,7 @@ func CreateAnonymousUser() (model.User, error) {
 func BuyPackage(req model.Penawaran, userID uint) (model.Paket, error) {
 
 	paket := model.Paket{
-		Jumlah: req.Jumlah,
+		Jumlah: float64(req.Jumlah),
 		UserId: userID,
 		Durasi: time.Now().Add(time.Duration(req.Durasi) * time.Hour),
 		Jenis:  req.Jenis,
