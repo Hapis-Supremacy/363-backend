@@ -17,9 +17,10 @@ import (
 )
 
 func init() {
-	initializer.LoadEnvVar()   // Baca .env
-	initializer.ConnecttoDB()  // Konek MySQL
-	initializer.SyncDatabase() // Bikin tabel otomatis
+	// DO NOT CALL LOAD ENV ON PROD
+	// initializer.LoadEnvVar()
+
+	initializer.ConnecttoDB() // Connect to MySQL
 }
 
 func addRoutes(mux *http.ServeMux) {
